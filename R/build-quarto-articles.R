@@ -41,7 +41,10 @@ build_quarto_articles <- function(pkg = ".", article = NULL, quiet = TRUE) {
     src_path <- path(pkg$src_path, qmds$file_in)
   }
   output_dir <- quarto_render(pkg, src_path, quiet = quiet)
-
+  article_dir <- fs::path(output_dir,"articles")
+  if (fs::dir_exists(article_dir)){
+    fs::file_move(dir_ls(article_dir), output_dir)
+  }
   # Read generated data from quarto template and render into pkgdown template
   unwrap_purrr_error(purrr::walk2(qmds$file_in, qmds$file_out, function(input_file, output_file) {
     built_path <- path(output_dir, path_rel(output_file, "articles"))
@@ -121,7 +124,7 @@ quarto_format <- function(pkg) {
   )
 }
 
-data_quarto_article <- function(pkg, path, input_path) { 
+data_quarto_article <- function(pkg, path, input_path) {
   html <- xml2::read_html(path, encoding = "UTF-8")
   meta_div <- xml2::xml_find_first(html, "//body/div[@class='meta']")
 
@@ -131,7 +134,7 @@ data_quarto_article <- function(pkg, path, input_path) {
 
   list(
     pagetitle = escape_html(xpath_text(html, "//head/title")),
-    toc = TRUE, 
+    toc = TRUE,
     source = repo_source(pkg, input_path),
     includes = list(
       head = xml2str(head),
@@ -150,7 +153,7 @@ data_quarto_article <- function(pkg, path, input_path) {
   )
 }
 
-tweak_quarto_html <- function(html) { 
+tweak_quarto_html <- function(html) {
   # If top-level headings use h1, move everything down one level
   h1 <- xml2::xml_find_all(html, "//h1")
   if (length(h1) > 1) {
